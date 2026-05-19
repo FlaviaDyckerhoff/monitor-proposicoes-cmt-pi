@@ -2,8 +2,8 @@ name: Monitor Proposições CMT-PI
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 08:00 BRT
-    - cron: '0 19 * * *'   # 16:00 BRT
+    - cron: '10 11 * * *'   # 08:10 BRT
+    - cron: '10 19 * * *'   # 16:10 BRT
   workflow_dispatch:
 
 jobs:
