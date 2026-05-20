@@ -101,6 +101,8 @@ function parseProposicoes(html) {
 
     const tituloMatch = bloco.match(/kt-widget5__title[^>]*>\s*([^<]+?)\s*<\/a>/);
     const titulo = tituloMatch ? tituloMatch[1].trim() : '-';
+    const hrefMatch = bloco.match(/<a[^>]+href="([^"]+)"[^>]*class="kt-widget5__title"/);
+    const url = hrefMatch ? new URL(hrefMatch[1], URL_BASE).href : URL_BASE;
 
     const tipoNumMatch = titulo.match(/^(.+?)\s+n[°º]\s*(\d+)\/\d+/);
     const tipo = tipoNumMatch ? tipoNumMatch[1].trim() : titulo;
@@ -123,7 +125,7 @@ function parseProposicoes(html) {
     const processoMatch = bloco.match(/Processo N°:<\/span>\s*<a[^>]*>([^<]+)<\/a>/);
     const processo = processoMatch ? processoMatch[1].trim() : '-';
 
-    proposicoes.push({ id, tipo, numero, ementa, data, autor, processo });
+    proposicoes.push({ id, tipo, numero, ementa, data, autor, processo, url });
   }
 
   return proposicoes;
@@ -351,7 +353,7 @@ async function enviarEmail(novas) {
       .sort((a, b) => (parseInt(b.numero) || 0) - (parseInt(a.numero) || 0))
       .map(p => `<tr>
         <td style="padding:8px;border-bottom:1px solid #eee;font-size:12px;white-space:nowrap">${p.tipo || '-'}</td>
-        <td style="padding:8px;border-bottom:1px solid #eee;white-space:nowrap"><strong>${p.numero || '-'}/${ANO}</strong></td>
+        <td style="padding:8px;border-bottom:1px solid #eee;white-space:nowrap"><strong><a href="${p.url || URL_BASE}" style="color:#003366;text-decoration:none">${p.numero || '-'}/${ANO}</a></strong></td>
         <td style="padding:8px;border-bottom:1px solid #eee;font-size:12px">${p.autor || '-'}</td>
         <td style="padding:8px;border-bottom:1px solid #eee;font-size:12px;white-space:nowrap">${p.data ? p.data.substring(0, 16) : '-'}</td>
         <td style="padding:8px;border-bottom:1px solid #eee;font-size:12px">${p.ementa || '-'}</td>
@@ -362,7 +364,7 @@ async function enviarEmail(novas) {
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:960px;margin:0 auto">
       <h2 style="color:#003366;border-bottom:2px solid #003366;padding-bottom:8px">
-        🏛️ CMT-PI — ${novas.length} nova(s) proposição(ões)
+        🏛️ Câmara Municipal de Teresina — ${novas.length} nova(s) proposição(ões)
       </h2>
       <p style="color:#666;font-size:13px">Câmara Municipal de Teresina · Monitoramento automático · ${new Date().toLocaleString('pt-BR')}</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px">
@@ -378,15 +380,15 @@ async function enviarEmail(novas) {
         <tbody>${linhas}</tbody>
       </table>
       <p style="margin-top:20px;font-size:12px;color:#999">
-        Acesse: <a href="https://teresina.camarasempapel.com.br/spl/consulta-producao.aspx?ano=${ANO}&ano_proposicao=${ANO}">Portal CMT-PI</a>
+        Acesse: <a href="https://teresina.camarasempapel.com.br/spl/consulta-producao.aspx?ano=${ANO}&ano_proposicao=${ANO}">Portal da Câmara Municipal de Teresina</a>
       </p>
     </div>
   `;
 
   await transporter.sendMail({
-    from: `"Monitor CMT-PI" <${EMAIL_REMETENTE}>`,
+    from: `"Monitor Câmara Municipal de Teresina" <${EMAIL_REMETENTE}>`,
     to: EMAIL_DESTINO,
-    subject: `🏛️ CMT-PI: ${novas.length} nova(s) proposição(ões) — ${new Date().toLocaleDateString('pt-BR')}`,
+    subject: `🏛️ Câmara Municipal de Teresina: ${novas.length} nova(s) proposição(ões) — ${new Date().toLocaleDateString('pt-BR')}`,
     html,
   });
 
