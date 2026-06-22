@@ -10,6 +10,19 @@ const ANO = new Date().getFullYear();
 const ITENS_POR_PAGINA = 50;
 const MAX_PAGINAS_PRIMEIRO_RUN = 10; // 500 proposições no backlog inicial
 
+const AEGEA_PI_TERMOS = [
+  'AEGEA', 'Aegea Saneamento',
+  'Águas de Teresina', 'Aguas de Teresina',
+  'Águas de Timon', 'Aguas de Timon',
+  'água', 'água potável', 'abastecimento de água', 'rede de água',
+  'esgoto', 'esgotamento sanitário', 'rede de esgoto',
+  'saneamento', 'sanemaento', 'saneamento básico',
+  'tratamento de água', 'tratamento de esgoto',
+  'ETA', 'ETE', 'estação de tratamento de água', 'estação de tratamento de esgoto',
+  'ligação de água', 'ligação de esgoto',
+  'vazamento de água', 'vazamento de esgoto'
+];
+
 // Tipos monitorados — nomes exatos conforme o portal
 const TIPOS_MONITORADOS = [
   'projeto de lei ordinária',
@@ -376,6 +389,52 @@ function mlEscapeRegExpClienteDestaque(valor) {
   return String(valor).replace(/[.*+?^\${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizarBusca(valor) {
+  return String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function termoPresente(textoNormalizado, termo) {
+  const alvo = normalizarBusca(termo);
+  if (!alvo) return false;
+  if (/^[a-z0-9]+$/.test(alvo)) {
+    return new RegExp('(^|[^a-z0-9])' + mlEscapeRegExpClienteDestaque(alvo) + '([^a-z0-9]|$)').test(textoNormalizado);
+  }
+  return textoNormalizado.includes(alvo);
+}
+
+function classificarAegeaPi(p) {
+  const texto = [p.cliente, p.clientes, p.autor, p.autores, p.tipo, p.rotulo, p.titulo, p.identificacao, p.ementa]
+    .filter(Boolean)
+    .join(' ');
+  const normalizado = normalizarBusca(texto);
+  const termos = AEGEA_PI_TERMOS.filter(termo => termoPresente(normalizado, termo));
+  return [...new Set(termos)];
+}
+
+function destacarTermosAegeaPi(texto, termos) {
+  let html = mlEscapeHtmlClienteDestaque(texto);
+  (termos || [])
+    .filter(termo => String(termo).length >= 3)
+    .sort((a, b) => b.length - a.length)
+    .forEach(termo => {
+      html = html.replace(
+        new RegExp(mlEscapeRegExpClienteDestaque(mlEscapeHtmlClienteDestaque(termo)), 'gi'),
+        match => '<mark style="background:#dcfce7;color:#14532d;padding:0 2px;border-radius:2px">' + match + '</mark>'
+      );
+    });
+  return html;
+}
+
+function renderAegeaPiBadge(p) {
+  if (!p.aegeaPi?.length) return '';
+  const termos = p.aegeaPi.slice(0, 5).map(mlEscapeHtmlClienteDestaque).join(', ');
+  const extra = p.aegeaPi.length > 5 ? ' +' + (p.aegeaPi.length - 5) : '';
+  return '<div style="margin-top:6px;color:#14532d;font-size:11px"><strong>AEGEA PI:</strong> ' + termos + extra + '</div>';
+}
+
 function mlDestacarTermosClienteEmail(texto, clientes) {
   const nomes = Array.from(new Set([...(clientes || []), ...CLIENTES_NOMES_PROPRIOS]))
     .filter(Boolean)
@@ -393,20 +452,24 @@ function renderizarEmentaCliente(p, renderBase) {
   const partes = texto.split(/\s+\|\s+Cliente citado:\s+/i);
   const ementa = renderBase
     ? renderBase(partes[0])
-    : mlDestacarTermosClienteEmail(partes[0], p && p.clientesCitados);
+    : destacarTermosAegeaPi(partes[0], (p && p.aegeaPi) || []);
   const clientes = partes.length > 1
     ? partes.slice(1).join(' | Cliente citado: ')
     : ((p && p.clientesCitados) || []).join(', ');
 
-  if (!clientes) return ementa;
-  return ementa + '<div style="margin-top:6px">' +
-    '<span style="display:inline-block;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700">' +
-    'Cliente citado: ' + mlDestacarTermosClienteEmail(clientes, p && p.clientesCitados) +
-    '</span></div>';
+  let extra = renderAegeaPiBadge(p);
+  if (clientes) {
+    extra += '<div style="margin-top:6px">' +
+      '<span style="display:inline-block;background:#eef6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700">' +
+      'Cliente citado: ' + mlDestacarTermosClienteEmail(clientes, p && p.clientesCitados) +
+      '</span></div>';
+  }
+  return ementa + extra;
 }
 
 async function enviarEmail(novas) {
   anotarClientesCitados(novas);
+  novas.forEach(p => { p.aegeaPi = classificarAegeaPi(p); });
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: EMAIL_REMETENTE, pass: EMAIL_SENHA },
