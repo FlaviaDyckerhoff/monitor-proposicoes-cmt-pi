@@ -556,7 +556,7 @@ async function enviarEmail(novas) {
   await transporter.sendMail({
     from: `"Monitor Câmara Municipal de Teresina" <${EMAIL_REMETENTE}>`,
     to: EMAIL_DESTINO,
-    subject: `🏛️ Câmara Municipal de Teresina: ${novas.length} nova(s) proposição(ões) — ${new Date().toLocaleDateString('pt-BR')}`,
+    subject: `🏛️ Teresina: ${novas.length} nova(s) proposição(ões) — ${new Date().toLocaleDateString('pt-BR')}`,
     html,
   });
 
