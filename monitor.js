@@ -1,3 +1,5 @@
+const mlPropsPriority = require('./priority_terms');
+
 const FICHA_URL = process.env.FICHA_URL || 'https://doe.monitorlegislativo.com.br/ficha';
 
 function fichaEmailButtonHtml() {
@@ -46,19 +48,6 @@ const URL_BASE = 'https://teresina.camarasempapel.com.br/spl/consulta-producao.a
 const ANO = new Date().getFullYear();
 const ITENS_POR_PAGINA = 50;
 const MAX_PAGINAS_PRIMEIRO_RUN = 10; // 500 proposições no backlog inicial
-
-const AEGEA_PI_TERMOS = [
-  'AEGEA', 'Aegea Saneamento',
-  'Águas de Teresina', 'Aguas de Teresina',
-  'Águas de Timon', 'Aguas de Timon',
-  'água', 'água potável', 'abastecimento de água', 'rede de água',
-  'esgoto', 'esgotamento sanitário', 'rede de esgoto',
-  'saneamento', 'sanemaento', 'saneamento básico',
-  'tratamento de água', 'tratamento de esgoto',
-  'ETA', 'ETE', 'estação de tratamento de água', 'estação de tratamento de esgoto',
-  'ligação de água', 'ligação de esgoto',
-  'vazamento de água', 'vazamento de esgoto'
-];
 
 // Tipos monitorados — nomes exatos conforme o portal
 const TIPOS_MONITORADOS = [
@@ -383,63 +372,10 @@ function ordemTipo(tipo) {
 }
 
 
-const CLIENTES_NOMES_PROPRIOS = [
-  'FIRJAN', 'Red Bull', 'Sindicerv', 'Boticario',
-  'Boticário', 'Grupo Boticario', 'Grupo Boticário', 'O Boticario',
-  'O Boticário', 'Abrasel', 'Abrasel PB', 'Abrasel Paraíba',
-  'ANBRASEL', 'Ambev', 'Heineken', 'Abralatas',
-  'ABIR', 'Coca-Cola', 'Coca Cola', 'Coca-Cola Company',
-  'Femsa', 'Solar', 'Grupo Simões', 'Grupo Simoes',
-  'Andina', 'CVI', 'iFood', 'Zé Delivery',
-  'Ze Delivery', 'Verde Brasil', 'JCRIG', 'Associação dos Cemitérios e Crematórios do Brasil',
-  'Associacao dos Cemiterios e Crematorios do Brasil', 'Lalamove', 'Matrix', 'CVC',
-  'Rei do Pitaco', 'Maersk', 'Mac Jee', 'Norte Energia',
-  'Pacto Pela Fome', 'Sanofi', 'TikTok', 'Minalba',
-  'Esmaltec', 'Nacional Gás', 'Nacional Gas', 'Syngenta',
-  'Braskem', 'Ypê', 'Ype', 'VTal',
-  'V.tal', 'Grupo EPR', 'EPR', 'Natural Energia',
-  'DIAGEO', 'Alpargatas', 'Ternium', 'ABRADEE',
-  'Eletrobras', 'Eletrobrás', 'MeetKai', 'IPQ',
-  'Equatorial', 'EquatorialEnergia', 'Equatorial Energia', 'Equatorial Goiás',
-  'Equatorial Goias', 'Equatorial Goiás Distribuidora de Energia', 'Equatorial Goias Distribuidora de Energia', 'CEA Equatorial',
-  'CEA Equatorial Energia', 'Equtorial', 'Energisa', 'EnergisaLuz',
-  'Neoenergia', 'ENEL', 'Ampla Energia', 'SABESP',
-  'COMGAS', 'COMGÁS', 'AEGEA', 'Aegea Saneamento',
-  'Águas de Teresina', 'Aguas de Teresina', 'Águas de Timon', 'Aguas de Timon',
-  'Águas do Rio', 'Aguas do Rio', 'Águas do Rio 1', 'Águas do Rio 4',
-  'Naturgy', 'Agenersa', 'Regenera', 'Comlurb',
-  'Hekos', 'Orizon', 'Solvi', 'União Norte',
-  'Uniao Norte', 'Vital', 'Eletromidia', 'Eletromídia',
-  'AkzoNobel', 'Expedia', 'Hotels.com', 'Vrbo',
-  'RTSC', 'Gramado Parks', 'Grupo Wish', 'Huawei',
-  'Carrefour', 'Atacadão', 'Atacadao', 'Walmart',
-  "Sam's Club", 'Sams Club', 'JBS', 'Friboi',
-  'Seara', 'Swift', "Pilgrim's", 'Pilgrims',
-  'Wild Fork', 'Ajinomoto', 'Vibra', 'Vibra Energia',
-  'BR Distribuidora', 'Raízen', 'Raizen', 'Mindlab',
-  'ABVTEX', 'Semove', 'Barcas', 'Seta',
-  'Nova Infra'
-];
-
-const CLIENTES_INATIVOS_NAO_DESTACAR = [
-  'CVC', 'DIAGEO', 'Femsa', 'Lalamove', 'lalamove',
-  'Maersk', 'Matrix', 'Rei do Pitaco', 'Sanofi', 'Syngenta',
-  'Ypê', 'Ype', 'Braskem', 'Vital', 'Natural Energia',
-  'Pacto Pela Fome', 'TikTok', 'Norte Energia', 'Mac Jee',
-  'Solar', 'Grupo Simões', 'Grupo Simoes'
-];
+const CLIENTES_NOMES_PROPRIOS = mlPropsPriority.COMPANY_NAMES;
 
 function clienteAtivoParaDestaque(nome) {
-  // Base viva do Monitor em 06/10/2026: somente nomes próprios de clientes
-  // operacionais. Bebidas/Energia/Fiação são categorias, não nomes literais.
-  const ativos = new Set([
-    'firjan', 'red bull', 'redbull', 'sindicerv',
-    'boticario', 'boticário', 'grupo boticario', 'grupo boticário',
-    'o boticario', 'o boticário', 'jbs', 'friboi', 'mindlab',
-    '4um', 'abrasel pb', 'abrasel paraíba',
-    'consórcio maracanã', 'octavio dyckerhoff'
-  ]);
-  return ativos.has(String(nome || '').toLowerCase());
+  return mlPropsPriority.isActiveCompany(nome);
 }
 
 function clientesCitadosNaProposicao(p) {
@@ -495,36 +431,6 @@ function termoPresente(textoNormalizado, termo) {
   return textoNormalizado.includes(alvo);
 }
 
-function classificarAegeaPi(p) {
-  const texto = [p.cliente, p.clientes, p.autor, p.autores, p.tipo, p.rotulo, p.titulo, p.identificacao, p.ementa]
-    .filter(Boolean)
-    .join(' ');
-  const normalizado = normalizarBusca(texto);
-  const termos = AEGEA_PI_TERMOS.filter(termo => termoPresente(normalizado, termo));
-  return [...new Set(termos)];
-}
-
-function destacarTermosAegeaPi(texto, termos) {
-  let html = mlEscapeHtmlClienteDestaque(texto);
-  (termos || [])
-    .filter(termo => String(termo).length >= 3)
-    .sort((a, b) => b.length - a.length)
-    .forEach(termo => {
-      html = html.replace(
-        new RegExp(mlEscapeRegExpClienteDestaque(mlEscapeHtmlClienteDestaque(termo)), 'gi'),
-        match => '<mark style="background:#dcfce7;color:#14532d;padding:0 2px;border-radius:2px">' + match + '</mark>'
-      );
-    });
-  return html;
-}
-
-function renderAegeaPiBadge(p) {
-  if (!p.aegeaPi?.length) return '';
-  const termos = p.aegeaPi.slice(0, 5).map(mlEscapeHtmlClienteDestaque).join(', ');
-  const extra = p.aegeaPi.length > 5 ? ' +' + (p.aegeaPi.length - 5) : '';
-  return '<div style="margin-top:6px;color:#14532d;font-size:11px"><strong>AEGEA PI:</strong> ' + termos + extra + '</div>';
-}
-
 function mlDestacarTermosClienteEmail(texto, clientes) {
   const nomes = Array.from(new Set([...(clientes || []), ...CLIENTES_NOMES_PROPRIOS]))
     .filter(Boolean)
@@ -538,17 +444,21 @@ function mlDestacarTermosClienteEmail(texto, clientes) {
   });
 }
 
-function renderizarEmentaCliente(p, renderBase) {
+function renderizarEmentaCliente(p, ...args) {
+  return mlPropsPriority.priorityEmenta(renderizarEmentaClienteAntesPrioridade(p, ...args), p);
+}
+
+function renderizarEmentaClienteAntesPrioridade(p, renderBase) {
   const texto = String((p && p.ementa) || '-');
   const partes = texto.split(/\s+\|\s+(?:🆘\s*)?CLIENTE CITADO:\s+|\s+\|\s+Cliente citado:\s+/i);
   const ementa = renderBase
     ? renderBase(partes[0])
-    : destacarTermosAegeaPi(partes[0], (p && p.aegeaPi) || []);
+    : mlEscapeHtmlClienteDestaque(partes[0]);
   const clientes = partes.length > 1
     ? partes.slice(1).join(' | Cliente citado: ')
     : ((p && p.clientesCitados) || []).join(', ');
 
-  let extra = renderAegeaPiBadge(p);
+  let extra = '';
   if (clientes) {
     extra += '<div style="margin-top:6px">' +
       '<span style="display:inline-block;background:#fff1f2;border:1px solid #fb7185;color:#991b1b;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0">' +
@@ -581,6 +491,10 @@ function clientesCitadosResumoEmail(novas) {
 }
 
 function assuntoEmailClienteCitado(novas, assuntoBase) {
+  return mlPropsPriority.prioritySubject(novas, assuntoEmailClienteCitadoAntesPrioridade(novas, assuntoBase));
+}
+
+function assuntoEmailClienteCitadoAntesPrioridade(novas, assuntoBase) {
   const nomes = clientesCitadosResumoEmail(novas);
   if (!nomes.length) return assuntoBase;
   const lista = nomes.slice(0, 3).join(', ') + (nomes.length > 3 ? ' +' + (nomes.length - 3) : '');
@@ -840,7 +754,6 @@ async function enviarEmail(novas) {
   }
 
   anotarClientesCitados(novas);
-  novas.forEach(p => { p.aegeaPi = classificarAegeaPi(p); });
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: { user: EMAIL_REMETENTE, pass: EMAIL_SENHA },
